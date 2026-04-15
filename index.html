@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DronaHQ Agentic Workflow Simulation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --border: #334155;
+            --jira-blue: #0052CC;
+            --slack-bg: #4A154B;
+            --teams-purple: #5059C9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:hover { background-color: #2563eb; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: var(--border); cursor: not-allowed; }
+
+        .simulation-area {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 20px;
+        }
+
+        /* Workflow Visualizer */
+        .workflow {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            position: relative;
+            opacity: 0.4;
+            transition: opacity 0.5s ease;
+            padding-bottom: 10px;
+        }
+
+        .step:last-child { margin-bottom: 0; padding-bottom: 0; }
+
+        .step::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 24px;
+            height: calc(100% - 10px);
+            width: 2px;
+            background-color: var(--border);
+            z-index: 1;
+        }
+
+        .step:last-child::before { display: none; }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--bg-dark);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-right: 20px;
+            z-index: 2;
+            position: relative;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .content { width: 100%; }
+
+        .content h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .content p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        /* Custom Visuals for Steps */
+        .visual-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 8px;
+        }
+
+        .v-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            gap: 4px;
+        }
+
+        .v-icon {
+            font-size: 1.5rem;
+            background: var(--bg-dark);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .v-arrow {
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Specific Mock UIs */
+        .mini-jira {
+            width: 60px;
+            height: 50px;
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .mj-head {
+            background: var(--jira-blue);
+            color: white;
+            font-size: 0.5rem;
+            font-weight: bold;
+            padding: 2px 4px;
+        }
+        .mj-body { padding: 4px; display: flex; flex-direction: column; gap: 3px; }
+        .mj-task { height: 6px; background: #DFE1E6; border-radius: 2px; width: 100%; }
+        .mj-task.blue { background: var(--primary); width: 80%; }
+
+        .app-logo {
+            width: 30px; height: 30px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: bold; color: white;
+        }
+        .logo-teams { background: var(--teams-purple); }
+        .logo-slack { background: var(--slack-bg); }
+
+        /* Step States */
+        .step.active { opacity: 1; }
+        .step.active .step-number {
+            border-color: var(--warning);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+            color: var(--warning);
+        }
+        .step.active .v-icon { border-color: var(--warning); }
+
+        .step.completed { opacity: 1; }
+        .step.completed .step-number {
+            border-color: var(--success);
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        .step.completed::before { background-color: var(--success); }
+
+        /* Agent Terminal */
+        .terminal {
+            background: #000;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #a7f3d0;
+            overflow-y: auto;
+            max-height: 650px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-header {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 10px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .log-entry {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        .log-time { color: #64748b; margin-right: 10px; }
+        .log-agent { color: #93c5fd; font-weight: 500; }
+        .log-action { color: #f8fafc; }
+        .log-success { color: var(--success); }
+        
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background-color: var(--success);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-top: 10px;
+        }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        @media (max-width: 900px) {
+            .simulation-area { grid-template-columns: 1fr; }
+            .visual-row { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Agentic SDLC Pipeline</h1>
+            <button id="startBtn" onclick="runSimulation()">Run Simulation</button>
+        </div>
+
+        <div class="simulation-area">
+            <div class="workflow" id="workflow">
+                
+                <div class="step" id="step-1">
+                    <div class="step-number">1</div>
+                    <div class="content">
+                        <h3>Requirement Intake</h3>
+                        <p>Requestor pushes needs into Jira, assigning the ticket to the DronaHQ Factory Agent.</p>
+                        <div class="visual-row">
+                            <div class="v-item"><div class="v-icon" style="font-size: 1.8rem;">👤</div>User</div>
+                            <div class="v-arrow">→</div>
+                            <div class="v-item">
+                                <div class="mini-jira">
+                                    <div class="mj-head">JIRA</div>
+                                    <div class="mj-body">
+                                        <div class="mj-task blue"></div>
+                                        <div class="mj-task"></div>
+                                        <div class="mj-task"></div>
+                                    </div>
+                                </div>
+                                Board
+                            </div>
+                            <div class="v-arrow">→</div>
+                            <div class="v-item"><div class="v-icon">🏭</div>Factory Agent</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step" id="step-2">
+                    <div class="step-number">2</div>
+                    <div class="content">
+                        <h3>Clarification Loop</h3>
+                        <p>BRD Agent picks up the ticket and seeks clarifications via MS Teams/Slack.</p>
+                        <div class="visual-row">
+                            <div class="v-item"><div class="v-icon">📝</div>BRD Agent</div>
+                            <div class="v-arrow">↔</div>
+                            <div class="v-item">
+                                <div style="display: flex; gap: 5px;">
+                                    <div class="app-logo logo-teams">T</div>
+                                    <div class="app-logo logo-slack">#</div>
+                                </div>
+                                Comms
+                            </div>
+                            <div class="v-arrow">↔</div>
+                            <div class="v-item"><div class="v-icon" style="font-size: 1.8rem;">👤</div>User</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step" id="step-3">
+                    <div class="step-number">3</div>
+                    <div class="content">
+                        <h3>PRD & Architecture Specs</h3>
+                        <p>PRD Agent converts BRD into low-level specs and invokes the Architect Agent.</p>
+                        <div class="visual-row">
+                            <div class="v-item"><div class="v-icon">📄</div>PRD Agent</div>
+                            <div class="v-arrow">→</div>
+                            <div class="v-item"><div class="v-icon">📐</div>Architect Agent</div>
+                            <div class="v-arrow">→</div>
+                            <div class="v-item"><div class="v-icon">🦊</div>GitLab Specs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step" id="step-4">
+                    <div class="step-number">4</div>
+                    <div class="content">
+                        <h3>Code, Test & PR</h3>
+                        <p>Code is written and tested per story point. Validated code is pushed as Pull Requests.</p>
+                        <div class="visual-row">
+                            <div class="v-item"><div class="v-icon">💻</div>Coding Agent</div>
+                            <div class="v-arrow">→</div>
+                            <div class="v-item"><div class="v-icon">🧪</div>Test Agent</div>
+                            <div class="v-arrow">→</div>
+                            <div class="v-item"><div class="v-icon">🌿</div>Git PRs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step" id="step-5">
+                    <div class="step-number">5</div>
+                    <div class="content">
+                        <h3>Merge & Deploy</h3>
+                        <p>Merge Agent pulls branches of various story points, resolves conflicts, and merges.</p>
+                        <div class="visual-row">
+                            <div class="v-item"><div class="v-icon">🔀</div>Merge Agent</div>
+                            <div class="v-arrow">→</div>
+                            <div class="v-item"><div class="v-icon">🚀</div>Main Branch</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="terminal" id="terminal">
+                <div class="terminal-header">Terminal / Agent Logs</div>
+                <div id="log-container">
+                    </div>
+                <div><span class="cursor" id="cursor"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const simData = [
+            {
+                stepId: "step-1",
+                logs: [
+                    { agent: "SYSTEM", text: "User 'Alex' pushed requirements to Jira." },
+                    { agent: "SYSTEM", text: "Webhook triggered: Ticket PROJ-99 created." },
+                    { agent: "Factory Agent", text: "Ticket assigned. Analyzing high-level needs from Jira..." },
+                    { agent: "Factory Agent", text: "Routing parsed needs to BRD Agent pipeline." }
+                ]
+            },
+            {
+                stepId: "step-2",
+                logs: [
+                    { agent: "BRD Agent", text: "Processing initial requirements..." },
+                    { agent: "BRD Agent", text: "Missing data detected: Auth method not specified." },
+                    { agent: "BRD Agent", text: "Pinging User 'Alex' via MS Teams / Slack integration..." },
+                    { agent: "SYSTEM", text: "User Reply: 'Use OAuth 2.0 with SSO'." },
+                    { agent: "BRD Agent", text: "Clarification received. Finalizing Business Requirement Document." }
+                ]
+            },
+            {
+                stepId: "step-3",
+                logs: [
+                    { agent: "PRD Agent", text: "Converting BRD into low-level Product Specs." },
+                    { agent: "PRD Agent", text: "Invoking Architect Agent for technical mapping." },
+                    { agent: "Architect Agent", text: "Designing PostgreSQL schema and API middleware." },
+                    { agent: "Architect Agent", text: "Pushing architectural & test specs to GitLab repo." }
+                ]
+            },
+            {
+                stepId: "step-4",
+                logs: [
+                    { agent: "Coding Agent", text: "Generating working code for Story Point 1." },
+                    { agent: "Test Agent", text: "Executing test specs. Bug found in API route. Fixing..." },
+                    { agent: "Test Agent", text: "Re-testing. 100% Pass rate achieved." },
+                    { agent: "SYSTEM", text: "Pushed feature branch to Git. Raised PR #101." },
+                    { agent: "Coding Agent", text: "Generating working code for Story Point 2." },
+                    { agent: "SYSTEM", text: "Pushed feature branch to Git. Raised PR #102." }
+                ]
+            },
+            {
+                stepId: "step-5",
+                logs: [
+                    { agent: "Merge Agent", text: "Analyzing PR #101 and PR #102." },
+                    { agent: "Merge Agent", text: "No merge conflicts detected across branches." },
+                    { agent: "Merge Agent", text: "Merging into single working codebase (main)." },
+                    { agent: "SYSTEM", text: "Code successfully pushed. Build pipeline triggered." },
+                    { agent: "SYSTEM", text: "SDLC Orchestration Complete.", isSuccess: true }
+                ]
+            }
+        ];
+
+        const logContainer = document.getElementById('log-container');
+        const startBtn = document.getElementById('startBtn');
+
+        function getTimestamp() {
+            const now = new Date();
+            return now.toISOString().split('T')[1].substring(0, 8);
+        }
+
+        function addLog(agent, text, isSuccess = false) {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            
+            const timeSpan = `<span class="log-time">[${getTimestamp()}]</span>`;
+            const agentSpan = `<span class="log-agent">${agent}:</span>`;
+            const textClass = isSuccess ? 'log-success' : 'log-action';
+            const textSpan = `<span class="${textClass}">${text}</span>`;
+            
+            div.innerHTML = `${timeSpan} ${agentSpan} ${textSpan}`;
+            logContainer.appendChild(div);
+            
+            // Auto scroll to bottom
+            const terminal = document.getElementById('terminal');
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function resetSimulation() {
+            logContainer.innerHTML = '';
+            document.querySelectorAll('.step').forEach(el => {
+                el.classList.remove('active', 'completed');
+            });
+        }
+
+        async function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runSimulation() {
+            startBtn.disabled = true;
+            startBtn.innerText = "Simulation Running...";
+            resetSimulation();
+
+            addLog("SYSTEM", "Starting DronaHQ Factory Orchestration...", true);
+            await sleep(1000);
+
+            for (let i = 0; i < simData.length; i++) {
+                const stepData = simData[i];
+                const stepEl = document.getElementById(stepData.stepId);
+                
+                // Set current step to active (Yellow/Warning style)
+                stepEl.classList.add('active');
+                
+                // Process logs for this step
+                for (let j = 0; j < stepData.logs.length; j++) {
+                    const log = stepData.logs[j];
+                    await sleep(900 + Math.random() * 500); 
+                    addLog(log.agent, log.text, log.isSuccess);
+                }
+
+                await sleep(600);
+                
+                // Mark step as completed (Green style)
+                stepEl.classList.remove('active');
+                stepEl.classList.add('completed');
+                
+                await sleep(500);
+            }
+
+            startBtn.disabled = false;
+            startBtn.innerText = "Restart Simulation";
+        }
+    </script>
+</body>
+</html>
