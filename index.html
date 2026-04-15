@@ -400,128 +400,152 @@
     </div>
 
     <script>
-        const simData = [
-            {
-                stepId: "step-1",
-                logs: [
-                    { agent: "SYSTEM", text: "User 'Alex' pushed requirements to Jira." },
-                    { agent: "SYSTEM", text: "Webhook triggered: Ticket PROJ-99 created." },
-                    { agent: "Factory Agent", text: "Ticket assigned. Analyzing high-level needs from Jira..." },
-                    { agent: "Factory Agent", text: "Routing parsed needs to BRD Agent pipeline." }
-                ]
-            },
-            {
-                stepId: "step-2",
-                logs: [
-                    { agent: "BRD Agent", text: "Processing initial requirements..." },
-                    { agent: "BRD Agent", text: "Missing data detected: Auth method not specified." },
-                    { agent: "BRD Agent", text: "Pinging User 'Alex' via MS Teams / Slack integration..." },
-                    { agent: "SYSTEM", text: "User Reply: 'Use OAuth 2.0 with SSO'." },
-                    { agent: "BRD Agent", text: "Clarification received. Finalizing Business Requirement Document." }
-                ]
-            },
-            {
-                stepId: "step-3",
-                logs: [
-                    { agent: "PRD Agent", text: "Converting BRD into low-level Product Specs." },
-                    { agent: "PRD Agent", text: "Invoking Architect Agent for technical mapping." },
-                    { agent: "Architect Agent", text: "Designing PostgreSQL schema and API middleware." },
-                    { agent: "Architect Agent", text: "Pushing architectural & test specs to GitLab repo." }
-                ]
-            },
-            {
-                stepId: "step-4",
-                logs: [
-                    { agent: "Coding Agent", text: "Generating working code for Story Point 1." },
-                    { agent: "Test Agent", text: "Executing test specs. Bug found in API route. Fixing..." },
-                    { agent: "Test Agent", text: "Re-testing. 100% Pass rate achieved." },
-                    { agent: "SYSTEM", text: "Pushed feature branch to Git. Raised PR #101." },
-                    { agent: "Coding Agent", text: "Generating working code for Story Point 2." },
-                    { agent: "SYSTEM", text: "Pushed feature branch to Git. Raised PR #102." }
-                ]
-            },
-            {
-                stepId: "step-5",
-                logs: [
-                    { agent: "Merge Agent", text: "Analyzing PR #101 and PR #102." },
-                    { agent: "Merge Agent", text: "No merge conflicts detected across branches." },
-                    { agent: "Merge Agent", text: "Merging into single working codebase (main)." },
-                    { agent: "SYSTEM", text: "Code successfully pushed. Build pipeline triggered." },
-                    { agent: "SYSTEM", text: "SDLC Orchestration Complete.", isSuccess: true }
-                ]
+    // Hide scrollbars for a cleaner iframe experience
+    document.head.insertAdjacentHTML("beforeend", `<style>
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        html { scrollbar-width: none; }
+    </style>`);
+
+    const simData = [
+        {
+            stepId: "step-1",
+            logs: [
+                { agent: "SYSTEM", text: "User 'Alex' pushed requirements to Jira." },
+                { agent: "SYSTEM", text: "Webhook triggered: Ticket PROJ-99 created." },
+                { agent: "Factory Agent", text: "Ticket assigned. Analyzing high-level needs from Jira..." },
+                { agent: "Factory Agent", text: "Routing parsed needs to BRD Agent pipeline." }
+            ]
+        },
+        {
+            stepId: "step-2",
+            logs: [
+                { agent: "BRD Agent", text: "Processing initial requirements..." },
+                { agent: "BRD Agent", text: "Missing data detected: Auth method not specified." },
+                { agent: "BRD Agent", text: "Pinging User 'Alex' via MS Teams / Slack integration..." },
+                { agent: "SYSTEM", text: "User Reply: 'Use OAuth 2.0 with SSO'." },
+                { agent: "BRD Agent", text: "Clarification received. Finalizing Business Requirement Document." }
+            ]
+        },
+        {
+            stepId: "step-3",
+            logs: [
+                { agent: "PRD Agent", text: "Converting BRD into low-level Product Specs." },
+                { agent: "PRD Agent", text: "Invoking Architect Agent for technical mapping." },
+                { agent: "Architect Agent", text: "Designing PostgreSQL schema and API middleware." },
+                { agent: "Architect Agent", text: "Pushing architectural & test specs to GitLab repo." }
+            ]
+        },
+        {
+            stepId: "step-4",
+            logs: [
+                { agent: "Coding Agent", text: "Generating working code for Story Point 1." },
+                { agent: "Test Agent", text: "Executing test specs. Bug found in API route. Fixing..." },
+                { agent: "Test Agent", text: "Re-testing. 100% Pass rate achieved." },
+                { agent: "SYSTEM", text: "Pushed feature branch to Git. Raised PR #101." },
+                { agent: "Coding Agent", text: "Generating working code for Story Point 2." },
+                { agent: "SYSTEM", text: "Pushed feature branch to Git. Raised PR #102." }
+            ]
+        },
+        {
+            stepId: "step-5",
+            logs: [
+                { agent: "Merge Agent", text: "Analyzing PR #101 and PR #102." },
+                { agent: "Merge Agent", text: "No merge conflicts detected across branches." },
+                { agent: "Merge Agent", text: "Merging into single working codebase (main)." },
+                { agent: "SYSTEM", text: "Code successfully pushed. Build pipeline triggered." },
+                { agent: "SYSTEM", text: "SDLC Orchestration Complete.", isSuccess: true }
+            ]
+        }
+    ];
+
+    const logContainer = document.getElementById('log-container');
+    const startBtn = document.getElementById('startBtn');
+
+    function getTimestamp() {
+        const now = new Date();
+        return now.toISOString().split('T')[1].substring(0, 8);
+    }
+
+    function addLog(agent, text, isSuccess = false) {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        
+        const timeSpan = `<span class="log-time">[${getTimestamp()}]</span>`;
+        const agentSpan = `<span class="log-agent">${agent}:</span>`;
+        const textClass = isSuccess ? 'log-success' : 'log-action';
+        const textSpan = `<span class="${textClass}">${text}</span>`;
+        
+        div.innerHTML = `${timeSpan} ${agentSpan} ${textSpan}`;
+        logContainer.appendChild(div);
+        
+        const terminal = document.getElementById('terminal');
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function resetSimulation() {
+        logContainer.innerHTML = '';
+        document.querySelectorAll('.step').forEach(el => {
+            el.classList.remove('active', 'completed');
+        });
+        // Scroll back to top smoothly on reset
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function runSimulation() {
+        startBtn.disabled = true;
+        startBtn.innerText = "Simulation Running...";
+        resetSimulation();
+
+        addLog("SYSTEM", "Starting DronaHQ Factory Orchestration...", true);
+        await sleep(1000);
+
+        for (let i = 0; i < simData.length; i++) {
+            const stepData = simData[i];
+            const stepEl = document.getElementById(stepData.stepId);
+            
+            // --- NEW: Smoothly scroll this step into the center of the iframe ---
+            stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            stepEl.classList.add('active');
+            
+            for (let j = 0; j < stepData.logs.length; j++) {
+                const log = stepData.logs[j];
+                await sleep(900 + Math.random() * 500); 
+                addLog(log.agent, log.text, log.isSuccess);
             }
-        ];
 
-        const logContainer = document.getElementById('log-container');
-        const startBtn = document.getElementById('startBtn');
-
-        function getTimestamp() {
-            const now = new Date();
-            return now.toISOString().split('T')[1].substring(0, 8);
+            await sleep(600);
+            stepEl.classList.remove('active');
+            stepEl.classList.add('completed');
+            await sleep(500);
         }
 
-        function addLog(agent, text, isSuccess = false) {
-            const div = document.createElement('div');
-            div.className = 'log-entry';
-            
-            const timeSpan = `<span class="log-time">[${getTimestamp()}]</span>`;
-            const agentSpan = `<span class="log-agent">${agent}:</span>`;
-            const textClass = isSuccess ? 'log-success' : 'log-action';
-            const textSpan = `<span class="${textClass}">${text}</span>`;
-            
-            div.innerHTML = `${timeSpan} ${agentSpan} ${textSpan}`;
-            logContainer.appendChild(div);
-            
-            // Auto scroll to bottom
-            const terminal = document.getElementById('terminal');
-            terminal.scrollTop = terminal.scrollHeight;
-        }
+        startBtn.disabled = false;
+        startBtn.innerText = "Restart Simulation";
+    }
 
-        function resetSimulation() {
-            logContainer.innerHTML = '';
-            document.querySelectorAll('.step').forEach(el => {
-                el.classList.remove('active', 'completed');
-            });
-        }
+    // Auto-start on scroll visibility
+    document.addEventListener("DOMContentLoaded", () => {
+        let hasRun = false; 
 
-        async function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        async function runSimulation() {
-            startBtn.disabled = true;
-            startBtn.innerText = "Simulation Running...";
-            resetSimulation();
-
-            addLog("SYSTEM", "Starting DronaHQ Factory Orchestration...", true);
-            await sleep(1000);
-
-            for (let i = 0; i < simData.length; i++) {
-                const stepData = simData[i];
-                const stepEl = document.getElementById(stepData.stepId);
-                
-                // Set current step to active (Yellow/Warning style)
-                stepEl.classList.add('active');
-                
-                // Process logs for this step
-                for (let j = 0; j < stepData.logs.length; j++) {
-                    const log = stepData.logs[j];
-                    await sleep(900 + Math.random() * 500); 
-                    addLog(log.agent, log.text, log.isSuccess);
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !hasRun) {
+                    hasRun = true;
+                    // Slight delay before auto-starting so the user registers the UI first
+                    setTimeout(runSimulation, 800);
                 }
+            });
+        }, { 
+            threshold: 0.4 
+        });
 
-                await sleep(600);
-                
-                // Mark step as completed (Green style)
-                stepEl.classList.remove('active');
-                stepEl.classList.add('completed');
-                
-                await sleep(500);
-            }
-
-            startBtn.disabled = false;
-            startBtn.innerText = "Restart Simulation";
-        }
-    </script>
+        observer.observe(document.body);
+    });
+</script>
 </body>
 </html>
